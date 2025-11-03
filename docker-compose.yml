@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    image: devopsdemoacr123.azurecr.io/backend-app:v1
+    container_name: backend-app
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./frontend
+    image: devopsdemoacr123.azurecr.io/frontend-app:v1
+    container_name: frontend-app
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

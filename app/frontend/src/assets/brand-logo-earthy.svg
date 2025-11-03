@@ -1,0 +1,10 @@
+<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .logo-text {
+            font-family: 'Lora', serif;
+            font-size: 24px;
+            fill: #5A4B3A;
+        }
+    </style>
+    <text x="5" y="30" class="logo-text">Glossary</text>
+</svg>

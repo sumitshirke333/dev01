@@ -1,0 +1,20 @@
+server:
+  http_listen_port: 12345
+
+metrics:
+  global:
+    scrape_interval: 15s
+  configs:
+  - name: integrations
+    scrape_configs:
+      - job_name: 'node'
+        static_configs:
+          - targets: ['localhost:9*00'] # node_exporter
+      - job_name: 'cadvisor'
+        static_configs:
+          - targets: ['localhost:8010'] # cadvisor
+remote_write:
+  - url: https://prometheus-blocks-prod.grafana.net/api/prom/push
+    basic_auth:
+      username: <instance_id>
+      password: <api_key>

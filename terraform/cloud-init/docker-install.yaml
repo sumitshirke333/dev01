@@ -1,0 +1,16 @@
+#cloud-config
+package_update: true
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+runcmd:
+  - curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+  - usermod -aG docker azureuser || true
+  - curl -L "https://github.com/grafana/agent/releases/latest/download/grafana-agent-linux-amd64.zip" -o /tmp/agent.zip
+  - apt-get -y install unzip
+  - unzip /tmp/agent.zip -d /usr/local/bin
+  - mkdir -p /etc/grafana-agent
+  - # grafana-agent config will be pushed later or via script

@@ -1,0 +1,83 @@
+name: DevOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [dev]
+
+env:
+  FRONT_IMAGE: frontend:latest
+  BACK_IMAGE: backend:latest
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    # ---------------- Build Images ----------------
+    - name: Build Frontend Docker Image
+      run: docker build -t $FRONT_IMAGE app/frontend
+
+    - name: Build Backend Docker Image
+      run: docker build -t $BACK_IMAGE app/backend
+
+    # ---------------- Run Trivy Scan ----------------
+    - name: Install Trivy
+      run: |
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+    - name: Trivy scan backend
+      run: bash security/trivy-scan.sh
+
+    # ---------------- Login to Azure & Push Images ----------------
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Login to ACR
+      run: |
+        echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ secrets.ACR_LOGIN_SERVER }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
+
+    - name: Tag & Push Backend
+      run: |
+        docker tag $BACK_IMAGE ${{ secrets.ACR_LOGIN_SERVER }}/backend:latest
+        docker push ${{ secrets.ACR_LOGIN_SERVER }}/backend:latest
+
+    - name: Tag & Push Frontend
+      run: |
+        docker tag $FRONT_IMAGE ${{ secrets.ACR_LOGIN_SERVER }}/frontend:latest
+        docker push ${{ secrets.ACR_LOGIN_SERVER }}/frontend:latest
+
+  deploy-to-vm:
+    runs-on: ubuntu-latest
+    needs: build-and-scan
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to Azure VM
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.VM_HOST }}
+        username: ${{ secrets.VM_USER }}
+        key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+        script: |
+          echo "🔄 Pull latest images"
+          docker login ${{ secrets.ACR_LOGIN_SERVER }} -u ${{ secrets.ACR_USERNAME }} -p ${{ secrets.ACR_PASSWORD }}
+          docker pull ${{ secrets.ACR_LOGIN_SERVER }}/backend:latest
+          docker pull ${{ secrets.ACR_LOGIN_SERVER }}/frontend:latest
+
+          echo "🛑 Stop existing containers"
+          docker rm -f backend || true
+          docker rm -f frontend || true
+
+          echo "▶️ Run containers"
+          docker run -d --name backend --restart unless-stopped -p 5000:5000 ${{ secrets.ACR_LOGIN_SERVER }}/backend:latest
+          docker run -d --name frontend --restart unless-stopped -p 80:80 ${{ secrets.ACR_LOGIN_SERVER }}/frontend:latest
