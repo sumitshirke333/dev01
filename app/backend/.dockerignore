@@ -1,13 +1,15 @@
-# Node modules
+# Node dependencies
 node_modules
 npm-debug.log
 yarn-error.log
+package-lock.json*     # (optional) only if you want to rebuild dependencies fresh each time
 
-# Build output
+# Build outputs
 build
 dist
+coverage
 
-# Env files
+# Environment files
 .env
 .env.local
 .env.*.local
@@ -15,6 +17,15 @@ dist
 # Logs
 *.log
 
-# OS files
+# OS & editor junk
 .DS_Store
 Thumbs.db
+.idea
+.vscode
+
+# Git & temporary files
+.git
+.gitignore
+*.swp
+*.swo
+

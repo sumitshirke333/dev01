@@ -1,18 +1,47 @@
 version: "3.9"
 
 services:
-  backend:
-    build: ./backend
-    image: devopsdemoacr123.azurecr.io/backend-app:v1
-    container_name: backend-app
+  mongo:
+    image: mongo:4.4
+    container_name: mongo
     ports:
-      - "5000:5000"
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: ./app/backend
+    image: backend:local
+    container_name: backend-app
+    env_file:
+      - ./app/backend/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/dev01
+      PORT: "5000"
+      NODE_ENV: development
+    working_dir: /usr/src/app
+    volumes:
+      - ./app/backend:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
+    depends_on:
+      - mongo
+    ports:
+      - "127.0.0.1:5000:5000"
 
   frontend:
-    build: ./frontend
-    image: devopsdemoacr123.azurecr.io/frontend-app:v1
+    build:
+      context: ./app/frontend
+      args:
+        REACT_APP_API_URL: http://localhost:5000
+    image: frontend:local
     container_name: frontend-app
-    ports:
-      - "80:80"
     depends_on:
       - backend
+    ports:
+      - "127.0.0.1:3000:80"
+
+volumes:
+  mongo_data:
+

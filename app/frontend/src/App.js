@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
@@ -11,6 +11,27 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
 
 function App() {
+  // Log environment variable to confirm .env is working
+  console.log('✅ REACT_APP_API_URL =', process.env.REACT_APP_API_URL);
+
+  // Check backend health status when app loads
+  useEffect(() => {
+    const checkBackendHealth = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/health`);
+        if (!response.ok) {
+          throw new Error('Backend not responding');
+        }
+        const data = await response.json();
+        console.log('✅ Backend health:', data);
+      } catch (error) {
+        console.error('❌ Backend connection failed:', error);
+      }
+    };
+
+    checkBackendHealth();
+  }, []);
+
   return (
     <Routes>
       <Route path="/" element={<MainLayout />}>
