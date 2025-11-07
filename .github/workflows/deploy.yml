@@ -1,4 +1,4 @@
-name: Deploy to AWS (Trivy -> ECR -> EC2 via SSM)
+name: Deploy to AWS (Trivy → ECR → EC2 via SSM → Monitoring)
 
 on:
   push:
@@ -23,6 +23,7 @@ jobs:
     name: Trivy repo scan (code + IaC + secrets)
     runs-on: ubuntu-latest
     continue-on-error: true
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,9 +45,10 @@ jobs:
           category: trivy-repo
 
   build-deploy:
-    name: Build -> Push -> Scan images -> Deploy
+    name: Build → Push → Scan images → Deploy to EC2
     runs-on: ubuntu-latest
     needs: sec-repo
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -103,17 +105,30 @@ jobs:
           sarif_file: trivy-backend.sarif
           category: trivy-backend
 
-      - name: Deploy to EC2 via SSM
+      - name: Deploy Application Stack (App)
         run: |
           CMD_ID=$(aws ssm send-command \
             --instance-ids "$EC2_INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --comment "Pull latest images & restart containers" \
+            --comment "Pull latest app images & restart containers" \
             --parameters 'commands=[
               "sudo docker compose -f /opt/app/docker-compose.yml pull",
               "sudo docker compose -f /opt/app/docker-compose.yml up -d",
               "sudo docker ps"
             ]' \
             --query "Command.CommandId" --output text)
-          echo "SSM Command ID: $CMD_ID"
+          echo "✅ App Deploy Command ID: $CMD_ID"
+
+      - name: Deploy Monitoring Stack (Prometheus + Grafana)
+        run: |
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Pull & restart monitoring stack" \
+            --parameters 'commands=[
+              "sudo docker compose -f /opt/monitoring/docker-compose.monitoring.yml pull",
+              "sudo docker compose -f /opt/monitoring/docker-compose.monitoring.yml up -d"
+            ]' \
+            --query "Command.CommandId" --output text)
+          echo "✅ Monitoring Deploy Command ID: $CMD_ID"
 
