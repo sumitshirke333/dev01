@@ -55,3 +55,7 @@ target/
 *.war
 *.ear
 session-manager-plugin.deb
+
+# ignore docker volumes for monitoring
+devops/monitoring/**/prometheus_data/
+devops/monitoring/**/grafana_data/
