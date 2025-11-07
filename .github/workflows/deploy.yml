@@ -20,7 +20,7 @@ env:
 
 jobs:
   sec-repo:
-    name: Trivy repo scan (code+IaC+secrets)
+    name: Trivy repo scan (code + IaC + secrets)
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -37,10 +37,11 @@ jobs:
           ignore-unfixed: true
           severity: HIGH,CRITICAL
 
-      - name: Upload SARIF
+      - name: Upload SARIF (repo)
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-repo.sarif
+          category: trivy-repo
 
   build-deploy:
     name: Build -> Push -> Scan images -> Deploy
@@ -57,17 +58,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to ECR
+      - name: Login to Amazon ECR
         run: |
           aws ecr get-login-password --region "$AWS_REGION" \
             | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
-      - name: Build images
+      - name: Build Docker images
         run: |
           docker build -t "$ECR_REGISTRY/$ECR_REPO_FRONTEND:latest" ./app/frontend
-          docker build -t "$ECR_REGISTRY/$ECR_REPO_BACKEND:latest"  ./app/backend
+          docker build -t "$ECR_REGISTRY/$ECR_REPO_BACKEND:latest" ./app/backend
 
-      - name: Push images
+      - name: Push Docker images
         run: |
           docker push "$ECR_REGISTRY/$ECR_REPO_FRONTEND:latest"
           docker push "$ECR_REGISTRY/$ECR_REPO_BACKEND:latest"
@@ -85,6 +86,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-frontend.sarif
+          category: trivy-frontend
 
       - name: Trivy image scan (backend)
         uses: aquasecurity/trivy-action@0.20.0
@@ -99,13 +101,14 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-backend.sarif
+          category: trivy-backend
 
       - name: Deploy to EC2 via SSM
         run: |
           CMD_ID=$(aws ssm send-command \
             --instance-ids "$EC2_INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --comment "Pull latest images & restart" \
+            --comment "Pull latest images & restart containers" \
             --parameters 'commands=[
               "sudo docker compose -f /opt/app/docker-compose.yml pull",
               "sudo docker compose -f /opt/app/docker-compose.yml up -d",
@@ -113,3 +116,4 @@ jobs:
             ]' \
             --query "Command.CommandId" --output text)
           echo "SSM Command ID: $CMD_ID"
+
