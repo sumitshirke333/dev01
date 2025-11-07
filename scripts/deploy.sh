@@ -1,50 +1,43 @@
-#!/bin/bash
-# ----------------------------
-# Deploy Frontend & Backend Containers from ACR
-# ----------------------------
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Set variables
-ACR_LOGIN_SERVER="devopsdemoacr123.azurecr.io"   # replace if different
-ACR_USERNAME="<ACR_USERNAME>"
-ACR_PASSWORD="<ACR_PASSWORD>"
+# Deploy Frontend & Backend from AWS ECR (manual run)
+AWS_REGION="${AWS_REGION:-ap-south-1}"
+PROJECT_NAME="${PROJECT_NAME:-devops-intern}"
 
-FRONT_IMAGE="$ACR_LOGIN_SERVER/frontend:latest"
-BACK_IMAGE="$ACR_LOGIN_SERVER/backend:latest"
+ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 
-# ----------------------------
-# Login to Azure Container Registry
-# ----------------------------
-echo "🔐 Logging in to ACR..."
-echo $ACR_PASSWORD | docker login $ACR_LOGIN_SERVER -u $ACR_USERNAME --password-stdin
+FRONT_IMAGE="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROJECT_NAME}-frontend:${FRONTEND_TAG:-latest}"
+BACK_IMAGE="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROJECT_NAME}-backend:${BACKEND_TAG:-latest}"
 
-# ----------------------------
-# Stop & Remove old containers
-# ----------------------------
-echo "🛑 Stopping old containers..."
+# Ports (host:container). Adjust if your container listens on a different port.
+HOST_FRONTEND_PORT="${HOST_FRONTEND_PORT:-80}"
+CONTAINER_FRONTEND_PORT="${CONTAINER_FRONTEND_PORT:-80}"
+HOST_BACKEND_PORT="${HOST_BACKEND_PORT:-3000}"
+CONTAINER_BACKEND_PORT="${CONTAINER_BACKEND_PORT:-3000}"
+
+echo "Logging in to ECR..."
+aws ecr get-login-password --region "$AWS_REGION" \
+  | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+echo "Stopping old containers (if any)..."
 docker rm -f frontend || true
 docker rm -f backend || true
 
-# ----------------------------
-# Pull latest images
-# ----------------------------
-echo "⬇️ Pulling latest images..."
-docker pull $FRONT_IMAGE
-docker pull $BACK_IMAGE
+echo "Pulling latest images..."
+docker pull "$FRONT_IMAGE"
+docker pull "$BACK_IMAGE"
 
-# ----------------------------
-# Run Backend container
-# ----------------------------
-echo "▶️ Running backend container..."
-docker run -d --name backend --restart unless-stopped -p 5000:4000 $BACK_IMAGE
+echo "Running backend..."
+docker run -d --name backend --restart unless-stopped \
+  -p "${HOST_BACKEND_PORT}:${CONTAINER_BACKEND_PORT}" \
+  "$BACK_IMAGE"
 
-# ----------------------------
-# Run Frontend container
-# ----------------------------
-echo "▶️ Running frontend container..."
-docker run -d --name frontend --restart unless-stopped -p 80:80 $FRONT_IMAGE
+echo "Running frontend..."
+docker run -d --name frontend --restart unless-stopped \
+  -p "${HOST_FRONTEND_PORT}:${CONTAINER_FRONTEND_PORT}" \
+  "$FRONT_IMAGE"
 
-# ----------------------------
-# Show running containers
-# ----------------------------
-echo "✅ Deployment completed. Current running containers:"
+echo "Done. Running containers:"
 docker ps
+
