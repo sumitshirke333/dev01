@@ -35,8 +35,8 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest ./frontend
-          docker build -t $ECR_REGISTRY/$ECR_REPO_BACKEND:latest ./backend
+          docker build -t $ECR_REGISTRY/$ECR_REPO_FRONTEND:latest ./app/frontend
+          docker build -t $ECR_REGISTRY/$ECR_REPO_BACKEND:latest ./app/backend
 
       - name: Push images to ECR
         run: |
