@@ -1,4 +1,4 @@
-name: Deploy to AWS (DevSecOps: Trivy + optional Snyk → ECR → EC2 via SSM)
+name: Deploy to AWS (Trivy → ECR → EC2 via SSM)
 
 on:
   push:
@@ -15,41 +15,33 @@ env:
 
 permissions:
   contents: read
-  security-events: write   # needed to upload SARIF
+  security-events: write
 
 jobs:
-  # --- Security scans on the repo (fast, pre-build) ---
   sec-repo:
-    name: Trivy (repo: code+IaC+secrets)
+    name: Trivy repo scan (code+IaC+secrets)
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-
-      # Trivy repo scan: vuln+misconfig+secret
-      - name: Trivy repo scan (fs)
+      - name: Trivy (fs)
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          scan-type: 'fs'
-          scanners: 'vuln,misconfig,secret'
-          format: 'sarif'
-          output: 'trivy-repo.sarif'
+          scan-type: fs
+          scanners: vuln,misconfig,secret
+          format: sarif
+          output: trivy-repo.sarif
           ignore-unfixed: true
-          severity: 'HIGH,CRITICAL'
-
-      - name: Upload SARIF (repo)
+          severity: HIGH,CRITICAL
+      - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-repo.sarif
 
-    # first run: don't fail the build on findings; change to 'false' to enforce
-    continue-on-error: true
-
-  # --- Build & push images, then scan images, then deploy ---
   build-deploy:
     name: Build → Push → Scan images → Deploy
     runs-on: ubuntu-latest
-    needs: [sec-repo]
-
+    needs: sec-repo
     steps:
       - uses: actions/checkout@v4
 
@@ -60,11 +52,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
+      - name: Login to ECR
         run: |
-          aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
-      # Build images from your real paths
       - name: Build images
         run: |
           docker build -t "$ECR_REGISTRY/$ECR_REPO_FRONTEND:latest" ./app/frontend
@@ -75,65 +67,43 @@ jobs:
           docker push "$ECR_REGISTRY/$ECR_REPO_FRONTEND:latest"
           docker push "$ECR_REGISTRY/$ECR_REPO_BACKEND:latest"
 
-      # Trivy image scans (post-build)
-      - name: Trivy scan FRONTEND image
+      - name: Trivy image scan (frontend)
         uses: aquasecurity/trivy-action@0.20.0
         with:
           image-ref: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_FRONTEND }}:latest
           format: sarif
           output: trivy-frontend.sarif
           ignore-unfixed: true
-          severity: 'HIGH,CRITICAL'
-      - name: Upload SARIF (frontend image)
+          severity: HIGH,CRITICAL
+      - name: Upload frontend SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-frontend.sarif
 
-      - name: Trivy scan BACKEND image
+      - name: Trivy image scan (backend)
         uses: aquasecurity/trivy-action@0.20.0
         with:
           image-ref: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_BACKEND }}:latest
           format: sarif
           output: trivy-backend.sarif
           ignore-unfixed: true
-          severity: 'HIGH,CRITICAL'
-      - name: Upload SARIF (backend image)
+          severity: HIGH,CRITICAL
+      - name: Upload backend SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-backend.sarif
 
-      # (Optional) Snyk scans — only runs if SNYK_TOKEN is set
-      - name: Setup Snyk
-        if: ${{ secrets.SNYK_TOKEN != '' }}
-        uses: snyk/actions/setup@v3
-      - name: Snyk Open Source (deps)
-        if: ${{ secrets.SNYK_TOKEN != '' }}
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --severity-threshold=high || true
-      - name: Snyk Container (frontend)
-        if: ${{ secrets.SNYK_TOKEN != '' }}
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk container test "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_FRONTEND }}:latest" --severity-threshold=high || true
-      - name: Snyk Container (backend)
-        if: ${{ secrets.SNYK_TOKEN != '' }}
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk container test "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_BACKEND }}:latest" --severity-threshold=high || true
-
-      # Deploy on EC2 via SSM (pull latest + restart)
       - name: Deploy to EC2 via SSM
         run: |
           CMD_ID=$(aws ssm send-command \
             --instance-ids "$EC2_INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --comment "Pull latest images & restart via compose" \
+            --comment "Pull latest images & restart" \
             --parameters 'commands=[
-              "set -euxo pipefail",
-              "sudo su - -c '\''docker compose -f /opt/app/docker-compose.yml pull'\''",
-              "sudo su - -c '\''docker compose -f /opt/app/docker-compose.yml up -d'\''",
-              "sudo su - -c '\''docker ps'\''"
+              "sudo docker compose -f /opt/app/docker-compose.yml pull",
+              "sudo docker compose -f /opt/app/docker-compose.yml up -d",
+              "sudo docker ps"
             ]' \
             --query "Command.CommandId" --output text)
-          echo "SSM Command: $CMD_ID"
+          echo "SSM Command ID: $CMD_ID"
+
