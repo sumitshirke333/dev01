@@ -54,3 +54,4 @@ target/
 *.jar
 *.war
 *.ear
+session-manager-plugin.deb
