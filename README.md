@@ -187,8 +187,7 @@ Below are the actual screenshot and video assets added for this project.
 
 ### 🎥 Demo Video
 
-<video src="./application_demo.mp4" controls width="800"></video>
-https://github.com/sumitshirke333/dev01/blob/main/application-demo.mp4
+https://github.com/user-attachments/assets/c6d3c210-d4f5-42fb-8e72-83b1dea629d4
 
 ---
 
