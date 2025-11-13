@@ -90,10 +90,6 @@ git clone https://github.com/sumitshirke333/dev01.git
 cd dev01
 docker compose up --build
 ```
-
-Frontend → [http://localhost:3000/backend](http://localhost:3000/backend)
-Backend → [http://localhost:5000](http://localhost:5000)
-
 ---
 
 ## ☁️ Deploying to AWS with Terraform
