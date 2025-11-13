@@ -1,113 +1,216 @@
-# 🚀 DevOps Internship Project
+# DevOps Internship Project – AWS EC2 | ECR | SSM | Terraform | GitHub Actions | Monitoring
 
-## 📘 Overview
+![Project badge](https://img.shields.io/badge/DevOps-AWS_Deployment-blue)
 
-Welcome to the **DevOps Internship Project**, designed to simulate a **real-world end-to-end DevOps environment**.
-Interns will work on deploying a **React + Node.js (Express)** web application originally configured for **Azure**, but the task is to **migrate and deploy it completely on AWS (Free Tier only)** — replicating real-world migration and troubleshooting scenarios.
+This repository contains a full end-to-end **DevOps deployment project**, where a React + Node.js + MongoDB application is deployed on **AWS**, using **EC2**, **ECR**, **SSM**, **Terraform**, **Docker**, **GitHub Actions CI/CD**, **Prometheus**, and **Grafana**.
 
-This project replicates production-level challenges through **intentional misconfigurations and debugging tasks** that interns must identify and resolve on their own.
+This README is commit-ready and includes real screenshot paths, clear setup instructions, architecture, CI/CD flow, and monitoring sections.
 
 ---
 
-## 🏗️ Project Structure
+## 🚀 Project Overview
+
+This DevOps project demonstrates:
+
+* Containerising a full‑stack web application
+* Pushing images to **Amazon ECR**
+* Deploying the application on **EC2** using Docker Compose
+* Managing the EC2 instance using **AWS Systems Manager (SSM)** (no SSH)
+* Provisioning AWS infrastructure with **Terraform**
+* Building CI/CD pipelines with **GitHub Actions**
+* Implementing **security scanning (Trivy)** in pipelines
+* **Monitoring** the application with **Prometheus + Grafana**
+
+---
+
+## 📁 Repository Structure
 
 ```
-project root dir/
-├── docker/                # Reusable Dockerfiles & multi-stage examples
-├── terraform/             # Terraform modules and environment configs
-├── scripts/               # Deployment and automation scripts
-├── monitoring/            # Prometheus & Grafana configurations
-├── security/              # Trivy config, Snyk notes, Docker security guidelines
+dev01/
+├── .github/workflows/           # CI/CD pipeline definitions
 ├── app/
-│   ├── frontend/          # React app (Dockerfile, build setup, tests)
-│   └── backend/           # Node/Express app (Dockerfile, MongoDB integration)
-└── .github/
-    └── workflows/
-        └── ci-cd.yaml     # GitHub Actions CI/CD pipeline
+│   ├── frontend/                # React app
+│   └── backend/                 # Node.js + MongoDB API
+├── infra/                       # Terraform infrastructure
+├── monitoring/                  # Prometheus + Grafana configs
+├── scripts/                     # Deployment and helper scripts
+├── screenshots/                 # Screenshots added for README
+├── videos/                      # Demo videos
+├── docker-compose.yml           # Runs containers locally + on EC2
+└── ISSUES.md                    # Issue log and fixes
 ```
 
 ---
 
-## ☁️ Deployment Requirement – AWS Migration
+## 🧭 Architecture
 
-> The provided repository is **Azure-based**, but the challenge requires interns to **migrate and deploy the entire setup on AWS Free Tier**.
-> You are not allowed to use Azure or any other paid services.
-> Stay strictly within AWS Free Tier limits.
-
-Interns can leverage services such as:
-
-* **Amazon ECR / ECS / EKS**
-* **AWS CodeBuild / CodePipeline**
-* **AWS CloudWatch / Prometheus / Grafana**
-* **AWS S3 / Route53 / IAM / Terraform**
-
----
-
-## 🎯 Objective
-
-The goal is to build, migrate, and manage a **cloud-native application pipeline** while demonstrating the ability to:
-
-1. Recreate Azure-based deployments within AWS
-2. Deploy containerized workloads using AWS services
-3. Automate CI/CD pipelines via GitHub Actions
-4. Manage infrastructure using Terraform
-5. Apply DevSecOps principles (Trivy, Snyk, secrets management)
-6. Set up monitoring and alerting dashboards
-7. Debug and fix real-world configuration and pipeline issues
+```
+           GitHub Actions
+        ┌──────────────────┐
+        │ build / scan /   │
+        │ push to ECR      │
+        └───────┬──────────┘
+                │
+                ▼
+        ┌──────────────────┐
+        │   Amazon ECR     │
+        └───────┬──────────┘
+                │ pull
+                ▼
+        ┌──────────────────┐    Metrics    ┌────────────────┐
+        │   AWS EC2        │──────────────▶│  Prometheus    │
+        │ (Docker Compose) │               └────────────────┘
+        └──────────────────┘                       │
+                │                                   ▼
+                │                              ┌──────────┐
+                └─────────────────────────────▶│ Grafana  │
+                                               └──────────┘
+```
 
 ---
 
-## 🧩 Error Challenge Scope
+## ⚙️ Tech Stack
 
-This project includes **predefined configuration and deployment challenges** intentionally placed across various layers.
-Each intern must independently identify, debug, and resolve these challenges by following systematic troubleshooting and analysis.
-
-> The project mimics real-world DevOps errors that can occur during cloud migration, pipeline automation, or infrastructure provisioning.
-> No direct hints will be provided — interns must rely on logs, metrics, and problem-solving skills.
-
----
-
-## 💡 Intern Guidelines
-
-1. Treat every challenge as a **production-level incident**.
-2. Use AWS CloudWatch logs, GitHub Actions logs, and monitoring tools to identify issues.
-3. Maintain a structured **`TROUBLESHOOTING.md`** file including:
-
-   * Issue observed
-   * Root Cause Analysis (RCA)
-   * Steps taken to resolve
-   * Validation/testing results
-4. Each intern must perform and document fixes independently.
-5. Collaboration on concepts is encouraged, but **code and implementations must be original**.
+* **React** – Frontend
+* **Node.js + Express** – Backend
+* **MongoDB** – Database
+* **Docker & Docker Compose** – Containerisation
+* **AWS EC2, ECR, SSM** – Deployment & Ops
+* **Terraform** – Infrastructure as Code
+* **GitHub Actions** – CI/CD pipeline
+* **Prometheus & Grafana** – Monitoring stack
+* **Trivy** – Security scanning
 
 ---
 
-## 🧾 Evaluation Criteria
+## 🧪 Running Locally
 
-| Area                             | Description                                           |
-| -------------------------------- | ----------------------------------------------------- |
-| **Debugging & RCA**              | Ability to identify and resolve real-world errors     |
-| **Migration Skills**             | Successful deployment of Azure-based app on AWS       |
-| **Automation & Infrastructure**  | Quality of Terraform, Docker, and CI/CD setup         |
-| **Security Awareness**           | Handling of secrets, scans, and secure configurations |
-| **Cost Management**              | Staying within AWS Free Tier                          |
-| **Documentation & Presentation** | Clarity in RCA notes and final demo                   |
+```bash
+git clone https://github.com/sumitshirke333/dev01.git
+cd dev01
+docker compose up --build
+```
 
----
-
-## 📄 Deliverables
-
-Each intern must submit:
-
-1. **Working AWS deployment** (publicly accessible endpoint)
-2. **GitHub repository** with corrected implementation
-3. **`TROUBLESHOOTING.md`** – detailed record of issues and fixes
-4. **AWS architecture diagram**
-5. **Final presentation or walkthrough video**
+Frontend → [http://localhost:3000/backend](http://localhost:3000/backend)
+Backend → [http://localhost:5000](http://localhost:5000)
 
 ---
 
-## 🙌 Conclusion
+## ☁️ Deploying to AWS with Terraform
 
-This challenge transforms interns from learners to **independent DevOps engineers** capable of real-world problem solving.
-By completing this project, you’ll gain hands-on experience with **migration, automation, and debugging** — the core skills of a professional DevOps engineer.
+### 1️⃣ Configure AWS CLI
+
+```bash
+aws configure
+# Region → ap-south-1
+```
+
+### 2️⃣ Deploy Infra
+
+```bash
+cd infra
+terraform init
+terraform apply
+```
+
+### 3️⃣ Connect to EC2 via SSM (no SSH)
+
+```bash
+aws ssm start-session --target <EC2-ID>
+```
+
+### 4️⃣ Pull & Run Containers
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+---
+
+## 🔁 CI/CD Pipeline – GitHub Actions
+
+Your pipeline performs:
+
+1. Checkout code
+2. Configure AWS login (OIDC or secrets)
+3. Build Docker images
+4. Run **Trivy security scans**
+5. Push images to **Amazon ECR**
+6. Trigger EC2 deployment via SSM
+
+Pipeline files are located in:
+
+```
+.github/workflows/
+```
+
+---
+
+## 🔒 Security
+
+* No hardcoded secrets
+* AWS keys stored in GitHub Secrets
+* Scanning enabled using **Trivy**
+
+---
+
+## 📊 Monitoring (Prometheus + Grafana)
+
+* Prometheus scrapes backend + node metrics
+* Grafana displays dashboards:
+
+  * CPU/Memory Usage
+  * Container metrics
+  * Request latency & errors
+  * MongoDB and API insights
+
+---
+
+## 📸 Screenshots & Demo
+
+Below are the actual screenshot and video assets added for this project.
+
+### 📷 Screenshots
+
+```md
+![Terraform Init](./screenshots/init.png)
+![Terraform Apply](./screenshots/apply.png)
+![SSM Containers Up](./screenshots/ssm_containers_up.png)
+![Pipeline - Build & Push](./screenshots/pipelines_a_build_push.png)
+![Pipeline - Trivy Scan](./screenshots/pipelines_b_trivy_scan.png)
+![MongoDB + Backend](./screenshots/mongo_db_backend.png)
+![Prometheus Dashboard](./screenshots/prometheus_dashboard.png)
+![Grafana Dashboard](./screenshots/grafana_dashboard.png)
+```
+
+### 🎥 Demo Video
+
+```html
+<video src="./videos/application_demo.mp4" controls width="800"></video>
+```
+
+---
+
+## 🛠 Troubleshooting
+
+A detailed RCA log is maintained in:
+
+```
+ISSUES.md
+```
+
+Add your final **TROUBLESHOOTING.md** for submission.
+
+---
+
+## 🧾 Author
+
+**Sumit Shirke**
+GitHub: [sumitshirke333](https://github.com/sumitshirke333)
+
+---
+
+## 📜 License
+
+Open-source for learning & DevOps portfolio use.
