@@ -178,10 +178,10 @@ Below are the actual screenshot and video assets added for this project.
 ![Terraform Apply](./screenshots/apply.png)
 ![SSM Containers Up](./screenshots/ssm_containers_up.png)
 ![Pipeline - Build & Push](./screenshots/pipelines_a_build_push.png)
-![Pipeline - Trivy Scan](./screenshots/pipelines_b_trivy_scan.png)
+![Pipeline - Trivy Scan](./screenshots/pipelines_b_trivy_scan_01.png)
 ![MongoDB + Backend](./screenshots/mongo_db_backend.png)
-![Prometheus Dashboard](./screenshots/prometheus_dashboard.png)
-![Grafana Dashboard](./screenshots/grafana_dashboard.png)
+![Prometheus Dashboard](./screenshots/prometheus_dashboard_01.png)
+![Grafana Dashboard](./screenshots/grafana_dashboard_01.png)
 ```
 
 ### 🎥 Demo Video
