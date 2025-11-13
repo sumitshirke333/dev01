@@ -173,22 +173,22 @@ Below are the actual screenshot and video assets added for this project.
 
 ### 📷 Screenshots
 
-```md
 ![Terraform Init](./screenshots/init.png)
 ![Terraform Apply](./screenshots/apply.png)
 ![SSM Containers Up](./screenshots/ssm_containers_up.png)
 ![Pipeline - Build & Push](./screenshots/pipelines_a_build_push.png)
-![Pipeline - Trivy Scan](./screenshots/pipelines_b_trivy_scan_01.png)
+![Pipeline - Trivy Scan#1](./screenshots/pipelines_b_trivy_scan_01.png)
+![Pipeline - Trivy Scan#2](./screenshots/pipelines_b_trivy_scan_02.png)
 ![MongoDB + Backend](./screenshots/mongo_db_backend.png)
-![Prometheus Dashboard](./screenshots/prometheus_dashboard_01.png)
-![Grafana Dashboard](./screenshots/grafana_dashboard_01.png)
-```
+![Prometheus Dashboard#1](./screenshots/prometheus_dashboard_01.png)
+![Prometheus Dashboard#2](./screenshots/prometheus_dashboard_02.png)
+![Grafana Dashboard#1](./screenshots/grafana_dashboard_01.png)
+![Grafana Dashboard#2](./screenshots/grafana_dashboard_02.png)
 
 ### 🎥 Demo Video
 
-```html
-<video src="./videos/application_demo.mp4" controls width="800"></video>
-```
+<video src="./application_demo.mp4" controls width="800"></video>
+https://github.com/sumitshirke333/dev01/blob/main/application-demo.mp4
 
 ---
 
